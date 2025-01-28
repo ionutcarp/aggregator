@@ -1,41 +1,62 @@
 package main
 
 import (
-	"fmt"
+	"database/sql"
 	"github.com/ionutcarp/aggregator/internal/config"
+	"github.com/ionutcarp/aggregator/internal/database"
+	_ "github.com/lib/pq"
 	"log"
-	"strings"
+	"os"
 )
 
-func cleanInput(text string) []string {
-	output := strings.ToLower(text)
-	words := strings.Fields(output)
-	return words
+type state struct {
+	db     *database.Queries
+	config *config.Config
 }
 
 func main() {
-	fmt.Println("postgres://example")
 	cfg, err := config.Read()
 	if err != nil {
 		log.Fatalf("error reading config file: %v", err)
 	}
-	fmt.Printf("Read config file: %+v\n", cfg)
 
-	err = cfg.SetUser("ionut")
+	db, err := sql.Open("postgres", cfg.DBURL)
 	if err != nil {
-		log.Fatalf("error setting user: %v", err)
+		log.Fatalf("error connecting to database: %v", err)
 	}
-	fmt.Printf("Set user: %+v\n", cfg)
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			log.Fatalf("error closing db connection: %v", err)
+		}
+	}(db)
+	dbQueries := database.New(db)
 
-	/*	reader := bufio.NewScanner(os.Stdin)
-		//kk
-				for {
-					fmt.Print("aggreGATOR> ")
-					reader.Scan()
-					words := cleanInput(reader.Text())
-					if len(words) == 0 {
-						continue
-					}
-					fmt.Printf("postgres://example")
-				}*/
+	programState := &state{
+		db:     dbQueries,
+		config: &cfg,
+	}
+
+	cmds := commands{
+		registeredCommands: make(map[string]func(*state, command) error),
+	}
+	cmds.register("login", handlerLogin)
+	cmds.register("register", handlerRegister)
+
+	if len(os.Args) < 2 {
+		log.Fatal("usage: ./aggregator <command>")
+		return
+	}
+
+	cmdName := os.Args[1]
+	cmdArgs := os.Args[2:]
+
+	err = cmds.run(programState, command{
+		Name: cmdName,
+		Args: cmdArgs,
+	})
+
+	if err != nil {
+		log.Fatal(err)
+	}
 }
