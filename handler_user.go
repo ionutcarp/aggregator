@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/ionutcarp/aggregator/internal/config"
 	"github.com/ionutcarp/aggregator/internal/database"
-	"log"
 	"time"
 )
 
@@ -25,12 +24,7 @@ func handlerLogin(s *state, cmd command) error {
 		return fmt.Errorf("could not set user: %w", err)
 	}
 
-	cfg, err := config.Read()
-	if err != nil {
-		log.Fatalf("error reading config file: %v", err)
-	}
-
-	fmt.Printf("User has been set to: %s\n", cfg.CurrentUserName)
+	fmt.Printf("User has been set to: %s\n", s.config.CurrentUserName)
 	return nil
 }
 

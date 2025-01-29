@@ -14,10 +14,6 @@ type Config struct {
 	CurrentUserName string `json:"current_user_name"`
 }
 
-/*func (receiver Config) SetUser() {
-
-}*/
-
 func getConfigFilePath() (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -36,8 +32,6 @@ func Read() (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
-
-	//file, err = os.Open(filePath)
 
 	data, fileReadErr := os.ReadFile(filePath)
 	if fileReadErr != nil {
@@ -69,13 +63,16 @@ func writeConfig(config Config) error {
 			log.Fatal(err)
 		}
 	}(file)
+
 	data, err := json.Marshal(config)
 	if err != nil {
 		return err
 	}
+
 	_, err = file.Write(data)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }

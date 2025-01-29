@@ -4,37 +4,44 @@ import (
 	"context"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/ionutcarp/aggregator/internal/config"
 	"github.com/ionutcarp/aggregator/internal/database"
-	"log"
 	"time"
 )
 
-func handlerAddFeed(s *state, cmd command) error {
-	cfg, err := config.Read()
-	if err != nil {
-		log.Fatalf("error reading config file: %v", err)
-	}
-	currentUser, err := s.db.GetUser(context.Background(), cfg.CurrentUserName)
-	if err != nil {
-		return fmt.Errorf("error getting current user: %v", err)
-	}
+func handlerAddFeed(s *state, cmd command, user database.User) error {
 	if len(cmd.Args) != 2 {
-		return fmt.Errorf("expected two arguments <feed name> <feed url>, got %d", len(cmd.Args))
+		return fmt.Errorf("usage: %s <feed name> <feed url>", cmd.Name)
 	}
+
 	feed, err := s.db.CreateFeed(context.Background(), database.CreateFeedParams{
 		ID:        uuid.New(),
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
 		Name:      cmd.Args[0],
 		Url:       cmd.Args[1],
-		UserID:    currentUser.ID,
+		UserID:    user.ID,
 	})
 	if err != nil {
 		return fmt.Errorf("error creating feed: %v", err)
 	}
 
+	feedFollows, err := s.db.CreateFeedFollow(context.Background(), database.CreateFeedFollowParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+		UserID:    user.ID,
+		FeedID:    feed.ID,
+	})
+	if err != nil {
+		return fmt.Errorf("error creating feed follows: %v", err)
+	}
+
+	fmt.Println("Feed created successfully:")
 	printFeed(feed)
+	fmt.Println()
+	fmt.Println("Feed followed successfully:")
+	printFeedFollow(feedFollows.UserName, feedFollows.FeedName)
+	fmt.Println("=====================================")
 
 	return nil
 }
