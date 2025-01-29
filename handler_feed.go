@@ -55,6 +55,7 @@ func handlerListFeeds(s *state, cmd command) error {
 		fmt.Printf("Name: %s\n", feed.Name)
 		fmt.Printf("URL: %s\n", feed.Url)
 		fmt.Printf("User: %v\n", feed.UserName)
+		fmt.Printf("LastFetchedAt: %v\n", feed.LastFetchedAt.Time)
 	}
 	return nil
 }
@@ -63,4 +64,5 @@ func printFeed(feed database.Feed) {
 	fmt.Printf("ID: %s\n", feed.ID)
 	fmt.Printf("URL: %s\n", feed.Url)
 	fmt.Printf("UserID: %s\n", feed.UserID)
+	fmt.Printf("LastFetchedAt: %v\n", feed.LastFetchedAt.Time)
 }

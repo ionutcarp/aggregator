@@ -15,14 +15,12 @@ import (
 
 const createFeed = `-- name: CreateFeed :one
 INSERT INTO feeds (id, created_at, updated_at, name, url, user_id)
-VALUES (
-        $1,
+VALUES ($1,
         $2,
         $3,
         $4,
         $5,
-        $6
-       )
+        $6)
 RETURNING id, created_at, updated_at, name, url, user_id, last_fetched_at
 `
 
@@ -58,7 +56,8 @@ func (q *Queries) CreateFeed(ctx context.Context, arg CreateFeedParams) (Feed, e
 }
 
 const getFeedByURL = `-- name: GetFeedByURL :one
-SELECT id, created_at, updated_at, name, url, user_id, last_fetched_at FROM feeds
+SELECT id, created_at, updated_at, name, url, user_id, last_fetched_at
+FROM feeds
 WHERE url = $1
 `
 
@@ -80,7 +79,7 @@ func (q *Queries) GetFeedByURL(ctx context.Context, url string) (Feed, error) {
 const getFeeds = `-- name: GetFeeds :many
 SELECT feeds.id, feeds.created_at, feeds.updated_at, feeds.name, feeds.url, feeds.user_id, feeds.last_fetched_at, users.name AS user_name
 FROM feeds
-JOIN users ON users.id=feeds.user_id
+         JOIN users ON users.id = feeds.user_id
 `
 
 type GetFeedsRow struct {
@@ -127,7 +126,8 @@ func (q *Queries) GetFeeds(ctx context.Context) ([]GetFeedsRow, error) {
 }
 
 const getNextFeedToFetch = `-- name: GetNextFeedToFetch :one
-SELECT id, created_at, updated_at, name, url, user_id, last_fetched_at FROM feeds
+SELECT id, created_at, updated_at, name, url, user_id, last_fetched_at
+FROM feeds
 ORDER BY last_fetched_at ASC NULLS FIRST
 LIMIT 1
 `
@@ -150,7 +150,7 @@ func (q *Queries) GetNextFeedToFetch(ctx context.Context) (Feed, error) {
 const markFeedFetched = `-- name: MarkFeedFetched :one
 UPDATE feeds
 SET last_fetched_at = NOW(),
-    updated_at = NOW()
+    updated_at      = NOW()
 WHERE id = $1
 RETURNING id, created_at, updated_at, name, url, user_id, last_fetched_at
 `
